@@ -15,7 +15,8 @@ else
   pm2_cmd=(pm2)
 fi
 pm2_bruto=$("${pm2_cmd[@]}" jlist | sed -n '/^\[/,$p')
-pm2=$(jq -c '[.[] | {nome:.name, id:.pm_id, status:.pm2_env.status, restarts:(.pm2_env.restart_time // 0),
+# Módulos do PM2 (ex.: pm2-logrotate) não são apps: ficam de fora da faixa (o monitor continua vigiando)
+pm2=$(jq -c '[.[] | select(.pm2_env.pmx_module != true) | {nome:.name, id:.pm_id, status:.pm2_env.status, restarts:(.pm2_env.restart_time // 0),
   memoria:(.monit.memory // 0), cpu:(.monit.cpu // 0), desde:(.pm2_env.pm_uptime // null),
   modo:(.pm2_env.exec_mode // ""), pasta:(.pm2_env.pm_cwd // "")}]' <<<"$pm2_bruto" 2>/dev/null) || pm2=null
 [[ -n "$pm2" ]] || pm2=null
