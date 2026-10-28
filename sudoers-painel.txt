@@ -1,0 +1,11 @@
+# /etc/sudoers.d/painel
+# Instale com:  sudo visudo -f /etc/sudoers.d/painel   (cole o conteúdo, trocando "sd0602" pelo usuário do PM2, se for outro)
+#
+# O painel roda como usuário comum e só pode chamar ESTES comandos como root, exatamente assim.
+# O "" no fim significa "sem argumentos": impede que alguém passe parâmetros extras.
+sd0602 ALL=(root) NOPASSWD: /opt/server-scripts/painel-dados.sh "", \
+                            /opt/server-scripts/analisar-disco.sh "", \
+                            /opt/server-scripts/backup-bancos.sh "", \
+                            /opt/server-scripts/limpar-www.sh "", \
+                            /opt/server-scripts/monitorar.sh "", \
+                            /opt/server-scripts/monitorar.sh --audit

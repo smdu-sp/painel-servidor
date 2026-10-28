@@ -1,0 +1,11 @@
+# Arquivos com senhas: ficam só no servidor
+scripts/servidor.conf
+.env.local
+.env*.local
+
+# Gerados
+node_modules/
+.next/
+dados/
+next-env.d.ts
+*.tsbuildinfo

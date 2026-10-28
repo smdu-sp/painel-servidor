@@ -1,0 +1,72 @@
+export TZ="America/Sao_Paulo"   # logs e painel no horário de Brasília (o relógio do servidor fica em UTC)
+# =====================================================================
+#  Configuração compartilhada pelos scripts do servidor
+#  Contém senhas: mantenha com permissão 600 (chmod 600 servidor.conf)
+# =====================================================================
+
+# ---------- Geral ----------
+DIR_LOGS="/var/log/server-scripts"
+DIR_ESTADO="/var/lib/server-scripts"
+# Se o Node foi instalado via nvm, o cron não enxerga ele. Aponte aqui a pasta bin:
+# ex.: EXTRA_PATH="/home/deploy/.nvm/versions/node/v22.11.0/bin"
+EXTRA_PATH=""
+# Proxy para sair para a internet (Telegram, npm). Vazio = sai direto.
+# ex.: PROXY_URL="http://usuario:senha@proxy.pmsp:8080"
+PROXY_URL=""
+NO_PROXY_LISTA="127.0.0.1,localhost,.pmsp"   # endereços que NÃO passam pelo proxy
+
+# ---------- Notificações (preencha um ou os dois canais) ----------
+# Telegram: crie o bot no @BotFather e pegue o chat_id (ver README)
+TELEGRAM_BOT_TOKEN=""
+TELEGRAM_CHAT_ID=""
+
+# E-mail via SMTP (usa o próprio curl, não precisa instalar nada)
+# Gmail: SMTP_URL="smtps://smtp.gmail.com:465" + senha de app
+SMTP_URL=""
+SMTP_USUARIO=""
+SMTP_SENHA=""
+EMAIL_DE=""
+EMAIL_PARA=""
+
+# ---------- 1) Limpeza da pasta www ----------
+WWW_DIR="/var/www"
+PROFUNDIDADE_PROJETOS=4           # até que nível procurar package.json dentro do www
+# Caminhos (relativos à raiz de cada projeto) que são só cache e podem ser apagados.
+# NÃO inclua .next nem dist: são o build que está rodando em produção.
+ALVOS_LIMPEZA=(.next/cache node_modules/.cache .turbo .swc coverage .nyc_output .eslintcache .parcel-cache)
+DIAS_LOGS=7                       # apaga *.log dos projetos com mais de N dias
+LIMPAR_CACHE_NPM=0                # 1 = roda "npm cache clean --force" no fim
+LIMPEZA_DRY_RUN=0                 # 1 = só lista o que apagaria (use no primeiro teste!)
+NOTIFICAR_LIMPEZA=0               # 1 = manda resumo do espaço liberado
+
+# ---------- 2) Backup dos bancos ----------
+DIR_BACKUP="/var/backups/bancos"
+NOTIFICAR_BACKUP_OK=0             # falhas são sempre notificadas; 1 = avisa sucesso também
+
+MYSQL_ATIVO=1
+MYSQL_HOST="127.0.0.1"
+MYSQL_PORTA=3306
+MYSQL_USUARIO="backup"
+MYSQL_SENHA=""
+MYSQL_IGNORAR="information_schema performance_schema mysql sys"
+
+POSTGRES_ATIVO=0
+POSTGRES_USUARIO_SO="postgres"    # usuário do sistema que acessa o Postgres sem senha
+POSTGRES_IGNORAR="template0 template1"
+
+# Comando opcional rodado após o backup (cópia para fora do servidor, por exemplo):
+# BACKUP_POS_COMANDO='rclone sync /var/backups/bancos gdrive:backups-servidor'
+BACKUP_POS_COMANDO=""
+
+# ---------- 3) Monitoramento ----------
+SERVICOS_SYSTEMD=(apache2 mysql)    # serviços do systemd a vigiar
+PM2_ATIVO=1
+PM2_USUARIO="sd0602"              # usuário dono do PM2 (vazio = o mesmo que roda o script)
+URLS=(
+  "http://api.smul.pmsp/"
+  "http://dsup.smul.pmsp/"
+)
+DISCO_LIMITE=85                   # % de uso de disco que dispara alerta
+BACKUP_IDADE_MAX_HORAS=26         # alerta se o backup mais recente for mais velho que isso
+AUDIT_NIVEL="high"                # gravidade mínima que conta: low | moderate | high | critical
+
