@@ -32,7 +32,7 @@ export type DiscoAnalise = {
   arquivos: { bytes: number; modificado: number; caminho: string }[];
   suspeitos: { id: string; titulo: string; bytes: number; explicacao: string; comando: string }[];
   bancos: { banco: string; bytes: number }[];
-  apagados: { bytes: number; pid: string; processo: string; arquivo: string }[];
+  apagados: { bytes: number; pid: string; processo: string; arquivo: string; fd?: string }[];
 };
 
 export type Estado = {

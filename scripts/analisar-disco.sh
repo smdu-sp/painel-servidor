@@ -116,15 +116,24 @@ suspeito tmp "Arquivos temporários (/tmp)" "$(du -sbx /tmp 2>/dev/null | cut -f
 while IFS=$'\t' read -r fd alvo; do
   s=$(stat -Lc %s "$fd" 2>/dev/null) || continue
   pid=${fd#/proc/}; pid=${pid%%/*}
-  printf '%s\t%s\t%s\t%s\n' "$s" "$pid" "$(cat "/proc/$pid/comm" 2>/dev/null)" "${alvo% (deleted)}" >> "$TMP/apagados.tsv"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$s" "$pid" "$(cat "/proc/$pid/comm" 2>/dev/null)" "${alvo% (deleted)}" "$fd" >> "$TMP/apagados.tsv"
 done < <(find /proc/[0-9]*/fd -lname '*(deleted)' -printf '%p\t%l\n' 2>/dev/null)
 apagados=$(sort -t$'\t' -k1,1nr "$TMP/apagados.tsv" | awk -F'\t' '!visto[$2 FS $4]++' | head -n 30 \
-  | jq -R -s -c '[split("\n")[] | select(length>0) | split("\t") | {bytes:(.[0]|tonumber), pid:.[1], processo:.[2], arquivo:.[3]}
+  | jq -R -s -c '[split("\n")[] | select(length>0) | split("\t") | {bytes:(.[0]|tonumber), pid:.[1], processo:.[2], arquivo:.[3], fd:.[4]}
                  | select(.bytes >= 1048576)]')
 total_apagados=$(jq '[.[].bytes] | add // 0' <<<"$apagados")
+# Logs dá para esvaziar pelo próprio descritor, sem reiniciar o processo (ex.: o daemon do PM2, que derrubaria todos os apps).
+# O laço confere de novo se o descritor ainda aponta para um arquivo apagado, caso o número tenha sido reaproveitado.
+# Outros arquivos (temporários do MySQL etc.) podem estar em uso: para esses, só reiniciando o processo.
+fds_logs=$(jq -r '[.[] | select(.arquivo | test("\\.log(\\.[0-9]+)?$|/logs?/")) | .fd] | join(" ")' <<<"$apagados")
+if [[ -n "$fds_logs" ]]; then
+  cmd_apagados="for f in $fds_logs; do sudo readlink \"\$f\" | grep -q ' (deleted)\$' && sudo truncate -s 0 \"\$f\"; done"
+else
+  cmd_apagados="pm2 restart <app>  ou  sudo systemctl restart <serviço>   # o processo listado acima"
+fi
 suspeito apagados "Arquivos apagados ainda abertos" "$total_apagados" \
-  "Arquivos que alguém apagou mas que um processo ainda mantém aberto: somem do du, mas o df continua contando. Detalhes abaixo." \
-  "pm2 restart <app>  ou  sudo systemctl restart <serviço>   # o processo listado acima"
+  "Arquivos que alguém apagou mas que um processo ainda mantém aberto: somem do du, mas o df continua contando. Logs (abaixo) dá para esvaziar com o comando, sem reiniciar nada; outros arquivos só saem reiniciando o processo dono (pm2 restart <app> ou sudo systemctl restart <serviço>)." \
+  "$cmd_apagados"
 
 # ---------- Monta o JSON ----------
 particoes=$(df -B1 --output=target,size,used,avail -x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs | tail -n +2 \
