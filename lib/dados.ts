@@ -11,6 +11,8 @@ export type AppPm2 = {
   desde: number | null;
   modo: string;
   pasta: string;
+  log_saida?: string;
+  log_erros?: string;
 };
 
 export type Disco = { montagem: string; tamanho: number; usado: number; livre: number; uso: number };
@@ -50,8 +52,24 @@ export type Estado = {
 
 export type Resultado = { ok: true; estado: Estado } | { ok: false; erro: string };
 
+// Última leitura boa do coletor, para quem só precisa de dados recentes (ex.: caminhos dos logs)
+const g = globalThis as unknown as { __painelEstado?: { em: number; estado: Estado } };
+
+/** Estado com no máximo `idadeMax` ms; roda o coletor de novo se o guardado for mais velho. */
+export async function estadoRecente(idadeMax = 60_000): Promise<Resultado> {
+  const guardado = g.__painelEstado;
+  if (guardado && Date.now() - guardado.em < idadeMax) return { ok: true, estado: guardado.estado };
+  return lerEstado();
+}
+
 /** Roda o coletor (painel-dados.sh) e devolve o estado do servidor. */
-export function lerEstado(): Promise<Resultado> {
+export async function lerEstado(): Promise<Resultado> {
+  const r = await rodarColetor();
+  if (r.ok) g.__painelEstado = { em: Date.now(), estado: r.estado };
+  return r;
+}
+
+function rodarColetor(): Promise<Resultado> {
   const [cmd, args] = comando("painel-dados.sh", []);
   return new Promise((resolve) => {
     execFile(cmd, args, { timeout: 20_000, maxBuffer: 10 * 1024 * 1024 }, (erro, saida, stderr) => {

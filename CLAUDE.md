@@ -67,6 +67,7 @@ Convenções e armadilhas já resolvidas:
 
 - `next.config.mjs`: `basePath` vem de `PAINEL_BASE_PATH` (padrão `/painel`), exposto como `NEXT_PUBLIC_BASE_PATH`. Fetches no cliente usam `BASE` de `components/formato.ts` (o `basePath` **não** é aplicado sozinho em `fetch`). Mudou o caminho ⇒ novo build.
 - `lib/dados.ts` roda o coletor; `lib/tarefas.ts` dispara tarefas com `spawn`, guarda histórico em `dados/execucoes.json` e logs em `dados/logs/<id>.log`; `app/api/*` são as rotas (todas exigem sessão).
+- Logs dos apps (`lib/logs.ts`, `/api/logs?app=&tipo=erros|saida&linhas=`): o painel lê os arquivos do PM2 **direto, sem sudo**, porque roda no PM2 do mesmo usuário (`sd0602`). O caminho vem do `pm2 jlist` (campos `log_saida`/`log_erros` do coletor), procurado pelo nome do app: nunca do navegador. Lê só os últimos 2 MB e tira os códigos ANSI.
 - Fontes empacotadas via `@fontsource` (Archivo variável com eixo `wdth` para títulos, Atkinson Hyperlegible para texto): o build não depende de internet.
 - Visual: claro/escuro por `prefers-color-scheme`, tokens em `app/globals.css` (`--fundo`, `--tinta`, `--ok`, `--alerta`, `--falha`…), classes `tom-*` só definem `--c`. Elemento de destaque: a frase de status grande no topo + faixa com um segmento por app. Responsivo até 390 px.
 

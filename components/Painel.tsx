@@ -8,6 +8,7 @@ import {
 } from "./formato";
 import Execucao from "./Execucao";
 import AnaliseDisco from "./AnaliseDisco";
+import LogsApp from "./LogsApp";
 
 type Inicial = Resultado & { execucoesPainel: Registro[] };
 type TarefaInfo = { id: string; titulo: string; descricao: string };
@@ -114,6 +115,7 @@ export default function Painel({ inicial, tarefas, carregadoEm }: { inicial: Ini
   const [falhaRede, setFalhaRede] = useState("");
   const [aberta, setAberta] = useState<string | null>(null);
   const [erroTarefa, setErroTarefa] = useState("");
+  const [logsDe, setLogsDe] = useState<string | null>(null);
 
   const atualizar = useCallback(async () => {
     setCarregando(true);
@@ -167,6 +169,7 @@ export default function Painel({ inicial, tarefas, carregadoEm }: { inicial: Ini
   }
 
   const fimExecucao = useCallback(() => atualizar(), [atualizar]);
+  const fecharLogs = useCallback(() => setLogsDe(null), []);
 
   const estado = dados.ok ? dados.estado : null;
   const grupos = useMemo(() => (estado?.pm2 ? agruparApps(estado.pm2) : []), [estado]);
@@ -210,7 +213,7 @@ export default function Painel({ inicial, tarefas, carregadoEm }: { inicial: Ini
       {estado && (
         <div className="grade">
           <div className="coluna-principal">
-            <Aplicacoes grupos={grupos} pm2Ok={estado.pm2 !== null} agora={estado.agora * 1000} />
+            <Aplicacoes grupos={grupos} pm2Ok={estado.pm2 !== null} agora={estado.agora * 1000} onLogs={setLogsDe} />
             <Dependencias audit={estado.audit} agora={estado.agora * 1000} onRodar={() => rodar("audit")} />
             <Backups bancos={bancos} agora={estado.agora * 1000} dir={estado.backups.dir} />
             <AnaliseDisco
@@ -245,6 +248,8 @@ export default function Painel({ inicial, tarefas, carregadoEm }: { inicial: Ini
           onFim={fimExecucao}
         />
       )}
+
+      {logsDe && <LogsApp app={logsDe} onFechar={fecharLogs} />}
     </div>
   );
 }
@@ -284,7 +289,14 @@ function Resumo({ problemas, grupos }: { problemas: Problema[]; grupos: Grupo[] 
   );
 }
 
-function Aplicacoes({ grupos, pm2Ok, agora }: { grupos: Grupo[]; pm2Ok: boolean; agora: number }) {
+function Aplicacoes({
+  grupos, pm2Ok, agora, onLogs,
+}: {
+  grupos: Grupo[];
+  pm2Ok: boolean;
+  agora: number;
+  onLogs: (app: string) => void;
+}) {
   return (
     <section className="secao" aria-labelledby="t-apps">
       <h2 id="t-apps">Aplicações</h2>
@@ -303,6 +315,7 @@ function Aplicacoes({ grupos, pm2Ok, agora }: { grupos: Grupo[]; pm2Ok: boolean;
                 <th scope="col" className="num opc">CPU</th>
                 <th scope="col" className="num">Reinícios</th>
                 <th scope="col" className="num opc">No ar há</th>
+                <th scope="col" className="acao"><span className="sr-only">Logs</span></th>
               </tr>
             </thead>
             <tbody>
@@ -325,6 +338,11 @@ function Aplicacoes({ grupos, pm2Ok, agora }: { grupos: Grupo[]; pm2Ok: boolean;
                     <td className="num opc">{online ? `${cpu.toFixed(1).replace(".", ",")}%` : "—"}</td>
                     <td className={`num ${restarts >= 5 ? "tom-alerta" : ""}`}>{restarts}</td>
                     <td className="num opc">{online && desde ? duracao(agora - desde) : "—"}</td>
+                    <td className="acao">
+                      <button className="botao-leve botao-mini" onClick={() => onLogs(g.nome)} aria-label={`Logs de ${g.nome}`}>
+                        Logs
+                      </button>
+                    </td>
                   </tr>
                 );
               })}

@@ -303,6 +303,26 @@ code { font-family: var(--f-codigo); font-size: 0.9em; }
 }
 .gaveta-nota { color: var(--tinta-2); font-size: 0.9rem; }
 
+/* ---------- logs dos apps ---------- */
+.tabela .acao { text-align: right; padding-right: 0; padding-left: 0.75rem; width: 1%; }
+.logs-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; }
+.logs-barra .abas { margin-top: 0; }
+.logs-filtro {
+  flex: 1 1 10rem; min-width: 0;
+  font: inherit; font-size: 0.9rem;
+  padding: 0.35rem 0.6rem; border-radius: 6px;
+  border: 1.5px solid var(--linha); background: var(--superficie); color: var(--tinta);
+}
+.logs-filtro:focus-visible { outline: 3px solid var(--tinta); outline-offset: 1px; }
+.logs-opcao { display: flex; align-items: center; gap: 0.35rem; color: var(--tinta-2); font-size: 0.88rem; white-space: nowrap; }
+.logs-opcao select {
+  font: inherit; color: var(--tinta); background: var(--superficie);
+  border: 1.5px solid var(--linha); border-radius: 6px; padding: 0.2rem 0.3rem;
+}
+.logs-opcao input { accent-color: var(--tinta); }
+.log-erro { color: color-mix(in srgb, var(--falha) 55%, var(--log-tinta)); }
+.log-cab { font-weight: 700; opacity: 0.7; }
+
 /* ---------- login ---------- */
 .login { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; }
 .login-caixa { width: min(380px, 100%); }
